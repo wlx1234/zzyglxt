@@ -9,14 +9,20 @@ public class FamPreDO extends FamPreDOKey {
     @NotBlank(message = "名方名称不能为空")
     private String name;
 
+    private String author;
+
+    private String famsource;
+    @NotBlank(message = "名方出处不能为空")
     private String source;
 
+    @NotBlank(message = "名方处方不能为空")
     private String prescription;
 
     private Integer visitNum;
 
     private String status;
 
+    @NotBlank(message = "名方剂型不能为空")
     private String type;
 
     private String creater;
@@ -27,11 +33,25 @@ public class FamPreDO extends FamPreDOKey {
 
     private Date itemupdateat;
 
-    @NotBlank(message = "正文内容不能为空")
+    @NotBlank(message = "名方制法及用途不能为空")
     private String content;
 
     public String getName() {
         return name;
+    }
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author == null ? null : author.trim();
+    }
+    public String getFamsource() {
+        return famsource;
+    }
+
+    public void setFamsource(String famsource) {
+        this.famsource = famsource == null ? null : famsource.trim();
     }
 
     public void setName(String name) {

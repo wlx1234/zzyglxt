@@ -42,6 +42,7 @@ public class ExpertExmainController {
         return new ResponseData(EmBusinessError.success,exmaineService.selectByExpertCode(expertUserCode));
     }
 
+    //打分
     @RequestMapping(value = "/exmain" , method = RequestMethod.PUT)
     @ResponseBody
     public ResponseData updExmain(@RequestBody IndustrialDevelopExpertRefDO developExpertRefDO){
@@ -50,12 +51,33 @@ public class ExpertExmainController {
         return new ResponseData(EmBusinessError.success);
     }
 
-    //删除分配专家
+    //更改课题状态，重新打分
+    @RequestMapping(value = "/ReExmain" , method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseData ReExmain(@RequestBody IndustrialDevelopExpertRefDO developExpertRefDO){
+        developExpertRefDO.setOpinion("");
+        developExpertRefDO.setScore("");
+        //打分，updateByPrimaryKeySelective不再是根据itemid和itemcode修改数据了，请注意
+        exmaineService.updateByPrimaryKeySelective(developExpertRefDO);
+        return new ResponseData(EmBusinessError.success);
+    }
+
+    //批量删除分配专家
     @DeleteMapping("/exmain")
     @ResponseBody
     public ResponseData deleteByTopicCode(@RequestBody List<IndustrialDevelopExpertRefDO> topicCodeList){
         for (IndustrialDevelopExpertRefDO topicCode:topicCodeList){
             exmaineService.deleteByTopicCode(topicCode.getTopicCode());
+        }
+        return new ResponseData(EmBusinessError.success);
+    }
+
+    //删除单个课题的专家
+    @DeleteMapping("/delExpertTopic")
+    @ResponseBody
+    public ResponseData delExpertTopic(@RequestBody List<IndustrialDevelopExpertRefDO> expertRefDOList){
+        for (IndustrialDevelopExpertRefDO expertRefDO:expertRefDOList){
+            exmaineService.delExpertTopic(expertRefDO);
         }
         return new ResponseData(EmBusinessError.success);
     }

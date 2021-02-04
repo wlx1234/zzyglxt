@@ -29,7 +29,18 @@
                             var isSuccess = false;
                             ajaxUtil.myAjax(null,"deletehealthcarechinesemedicinedo/"+row.itemid+"/"+row.itemcode,null,function (data) {
                                 if(ajaxUtil.success(data)){
-                                    alertUtil.info("删除中医药名称成功");
+                                    var submitConfirmModal = {
+                                        modalBodyID :"myTopicSubmitTip",
+                                        modalTitle : "提示",
+                                        modalClass : "modal-lg",
+                                        cancelButtonStyle: "display:none",
+                                        modalConfirmFun:function (){
+                                            return true;
+                                        }
+                                    }
+                                    var submitConfirm = modalUtil.init(submitConfirmModal);
+                                    submitConfirm.show();
+
                                     isSuccess = true;
                                     refreshTable();
                                 }
@@ -55,11 +66,18 @@
                             ajaxUtil.myAjax(null,"changestatustomedicine/"+row.itemid+"/"+row.itemcode,submitStatus,function (data) {
                                 if(ajaxUtil.success(data)){
                                     if(data.code == ajaxUtil.successCode){
-                                        if(sessionStorage.getItem("rolename") == "文化宣传处长"){
-                                            alertUtil.info("审核已通过，已发送给综合处处长做最后审核！");
-                                        }else{
-                                            alertUtil.info("审核已通过，已上架！");
+                                        var submitConfirmModal = {
+                                            modalBodyID :"myTopicSubmitTip",
+                                            modalTitle : "提示",
+                                            modalClass : "modal-lg",
+                                            cancelButtonStyle: "display:none",
+                                            modalConfirmFun:function (){
+                                                return true;
+                                            }
                                         }
+                                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                                        submitConfirm.show();
+
                                         isSuccess = true;
                                         refreshTable();
                                     }else{
@@ -92,7 +110,18 @@
                             ajaxUtil.myAjax(null,"changestatustomedicine/"+row.itemid+"/"+row.itemcode,submitStatus,function (data) {
                                 if(ajaxUtil.success(data)){
                                     if(data.code == 88888){
-                                        alertUtil.info("操作成功");
+                                        var submitConfirmModal = {
+                                            modalBodyID :"myTopicSubmitTip",
+                                            modalTitle : "提示",
+                                            modalClass : "modal-lg",
+                                            cancelButtonStyle: "display:none",
+                                            modalConfirmFun:function (){
+                                                return true;
+                                            }
+                                        }
+                                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                                        submitConfirm.show();
+
                                         isSuccess = true;
                                         refreshTable();
                                     }else{
@@ -119,7 +148,18 @@
                             ajaxUtil.myAjax(null,"changestatustomedicine/"+row.itemid+"/"+row.itemcode,submitStatus,function (data) {
                                 if(ajaxUtil.success(data)){
                                     if(data.code == 88888){
-                                        alertUtil.success("下架成功");
+                                        var submitConfirmModal = {
+                                            modalBodyID :"myTopicSubmitTip",
+                                            modalTitle : "提示",
+                                            modalClass : "modal-lg",
+                                            cancelButtonStyle: "display:none",
+                                            modalConfirmFun:function (){
+                                                return true;
+                                            }
+                                        }
+                                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                                        submitConfirm.show();
+
                                         isSuccess = true;
                                         refreshTable();
                                     }else{
@@ -173,7 +213,18 @@
                             ajaxUtil.myAjax(null,"changestatustomedicine/"+row.itemid+"/"+row.itemcode,submitStatus,function (data) {
                                 if(ajaxUtil.success(data)){
                                     if(data.code == 88888){
-                                        alertUtil.info("已提交");
+                                        var submitConfirmModal = {
+                                            modalBodyID :"myTopicSubmitTip",
+                                            modalTitle : "提示",
+                                            modalClass : "modal-lg",
+                                            cancelButtonStyle: "display:none",
+                                            modalConfirmFun:function (){
+                                                return true;
+                                            }
+                                        }
+                                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                                        submitConfirm.show();
+
                                         isSuccess = true;
                                         refreshTable();
                                     }else{
@@ -201,7 +252,18 @@
                             ajaxUtil.myAjax(null,"changestatustomedicine/"+row.itemid+"/"+row.itemcode,submitStatus,function (data) {
                                 if(ajaxUtil.success(data)){
                                     if(data.code == 88888){
-                                        alertUtil.info("已提交");
+                                        var submitConfirmModal = {
+                                            modalBodyID :"myTopicSubmitTip",
+                                            modalTitle : "提示",
+                                            modalClass : "modal-lg",
+                                            cancelButtonStyle: "display:none",
+                                            modalConfirmFun:function (){
+                                                return true;
+                                            }
+                                        }
+                                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                                        submitConfirm.show();
+
                                         isSuccess = true;
                                         refreshTable();
                                     }else{
@@ -230,34 +292,34 @@
            var p2 = dictUtil.getDictByCode(dictUtil.DICT_LIST.effectType);
             $("#Search").selectUtil(p2);
 
-            $("#Search").unbind("change").on("change",function () {
-                var newArry = [];
-                var allTableData = JSON.parse(localStorage.getItem("2"));
-                var searchGxfl=document.getElementById("Search").value;
-
-                for (var i in allTableData) {
-                    for (var v in aCol){
-                        var textP = allTableData[i][aCol[v].field];
-                        var isStatusSlot=false;           // 默认状态为true
-                        //状态条件判断,与表格字段的状态一致,这里根据自己写的修改
-                        var gxfl= allTableData[i]["chineseMedicineType"]
-                        //调试时可以先打印出来，进行修改
-                        if(gxfl==searchGxfl){
-                            isStatusSlot=true;
-                        }
-                        //当存在时将条件改为flase
-                        if (textP == null || textP == undefined || textP == '') {
-                            textP = "1";
-                        }
-                        if(isStatusSlot){
-                            newArry.push(allTableData[i])
-                        }
-                        var newArr=new Set(newArry)
-                        newArry=Array.from(newArr)
-                        $("#table").bootstrapTable("load", newArry);
-                    }
-                }
-            });
+            // $("#Search").unbind("change").on("change",function () {
+            //     var newArry = [];
+            //     var allTableData = JSON.parse(localStorage.getItem("2"));
+            //     var searchGxfl=document.getElementById("Search").value;
+            //
+            //     for (var i in allTableData) {
+            //         for (var v in aCol){
+            //             var textP = allTableData[i][aCol[v].field];
+            //             var isStatusSlot=false;           // 默认状态为true
+            //             //状态条件判断,与表格字段的状态一致,这里根据自己写的修改
+            //             var gxfl= allTableData[i]["chineseMedicineType"]
+            //             //调试时可以先打印出来，进行修改
+            //             if(gxfl==searchGxfl){
+            //                 isStatusSlot=true;
+            //             }
+            //             //当存在时将条件改为flase
+            //             if (textP == null || textP == undefined || textP == '') {
+            //                 textP = "1";
+            //             }
+            //             if(isStatusSlot){
+            //                 newArry.push(allTableData[i])
+            //             }
+            //             var newArr=new Set(newArry)
+            //             newArry=Array.from(newArr)
+            //             $("#table").bootstrapTable("load", newArry);
+            //         }
+            //     }
+            // });
 
             var aCol = [
                         {field: 'chineseMedicineName', title: '中医药名称'},
@@ -288,11 +350,13 @@
                 var addstr=document.getElementById("chargePersonSearch").value;
                 var str = document.getElementById("taskNameSearch").value.toLowerCase();
                 var allTableData = JSON.parse(localStorage.getItem("2"));
+                var searchGxfl=document.getElementById("Search").value;
                 if(str.indexOf("请输入")!=-1){
                     str=""
                 }
                 for (var i in allTableData) {
                     for (var v in aCol){
+                        var gxfl= allTableData[i]["chineseMedicineType"]
                         var textP = allTableData[i][aCol[v].field];
                         var isStatusSlot=false;           // 默认状态为true
                         //状态条件判断,与表格字段的状态一致,这里根据自己写的修改
@@ -301,7 +365,10 @@
                         // console.log("status:"+status)
                         //调试时可以先打印出来，进行修改
                         if(addstr==status){
-                            isStatusSlot=true;
+                            if(gxfl == searchGxfl){
+                                isStatusSlot=true;
+                            }
+
                         }
                         //当存在时将条件改为flase
                         if (textP == null || textP == undefined || textP == '') {

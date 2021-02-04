@@ -193,7 +193,17 @@
                             ajaxUtil.myAjax(null,"/industrialdevelop/delTopic",projectEntity,function (data) {
                                 if(ajaxUtil.success(data)){
                                     ajaxUtil.deleteFile(row.itemcode);
-                                    alertUtil.info("删除课题项目成功");
+                                    var submitConfirmModal = {
+                                        modalBodyID :"myTopicSubmitTip",
+                                        modalTitle : "提示",
+                                        modalClass : "modal-lg",
+                                        cancelButtonStyle: "display:none",
+                                        modalConfirmFun:function (){
+                                            return true;
+                                        }
+                                    }
+                                    var submitConfirm = modalUtil.init(submitConfirmModal);
+                                    submitConfirm.show();
                                     isSuccess = true;
                                     refreshTable();
                                 }
@@ -240,7 +250,17 @@
                                             if(ajaxUtil.success(data)){
                                                 if(data.code == 88888){
                                                     ajaxUtil.myAjax(null,"/industrialdevelop/updTopic",developTopicDO,null,false,true);
-                                                    alertUtil.info("审核已通过");
+                                                    var submitConfirmModal = {
+                                                        modalBodyID :"myTopicSubmitTip",
+                                                        modalTitle : "提示",
+                                                        modalClass : "modal-lg",
+                                                        cancelButtonStyle: "display:none",
+                                                        modalConfirmFun:function (){
+                                                            return true;
+                                                        }
+                                                    }
+                                                    var submitConfirm = modalUtil.init(submitConfirmModal);
+                                                    submitConfirm.show();
                                                     isSuccess = true;
                                                     refreshTable();
                                                 }else{
@@ -295,7 +315,17 @@
                                                     ajaxUtil.myAjax(null,"/industrialdevelop/projectStatus/"+row.itemid+"/"+row.itemcode,xmStatus,function (data) {
                                                         if(ajaxUtil.success(data)){
                                                             if(data.code == 88888){
-                                                                alertUtil.info("操作成功");
+                                                                var submitConfirmModal = {
+                                                                    modalBodyID :"myTopicSubmitTip",
+                                                                    modalTitle : "提示",
+                                                                    modalClass : "modal-lg",
+                                                                    cancelButtonStyle: "display:none",
+                                                                    modalConfirmFun:function (){
+                                                                        return true;
+                                                                    }
+                                                                }
+                                                                var submitConfirm = modalUtil.init(submitConfirmModal);
+                                                                submitConfirm.show();
                                                                 isSuccess = true;
                                                                 refreshTable();
                                                             }else{
@@ -553,7 +583,7 @@
                 $("#chargePersonSearch").selectUtil(auditStatus);
                 var url = "/industrialdevelop/getTopic?examineStatus=2";
                 var aCol = [
-                    {field: 'projectNo', title: '项目编号'},
+                    {field: 'projectNo', title: '项目编号',width:'200px'},
                     {field: 'projectName', title: '项目名称', formatter: viewOperation, events: viewEvents},
                     {field: 'company', title: '申报单位'},
                     {field: 'examineStatus', title: '审核状态', formatter: function (value,row) {
@@ -565,7 +595,7 @@
                                 return '</p>'+auditStatus[2].text+'</p>'
                             }
                         }},
-                    {field: 'action', title: '操作', formatter: operation4, events: orgEvents}
+                    {field: 'action', title: '操作',width:'200px', formatter: operation4, events: orgEvents}
                 ];
 
             }
@@ -643,11 +673,7 @@
                 var newArr=new Set(newArry)
                 newArry=Array.from(newArr)
                 $("#table").bootstrapTable("load", newArry);
-
             })
-
-
-
 
         })
 })();

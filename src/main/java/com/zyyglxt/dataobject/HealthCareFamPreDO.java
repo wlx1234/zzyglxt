@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class HealthCareFamPreDO extends HealthCareFamPreDOKey {
 
-    @NotBlank(message = "标题名称不能为空")
+    @NotBlank(message = "国医话健康标题不能为空")
     private String name;
 
     private String source;

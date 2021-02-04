@@ -24,6 +24,7 @@ public class HealthSciKnowDO extends HealthSciKnowDOKey {
 
     private Date itemupdateat;
 
+    @NotBlank(message = "科普知识正文详情不能为空")
     private String content;
 
     public String getScienceKnowledgeName() {
