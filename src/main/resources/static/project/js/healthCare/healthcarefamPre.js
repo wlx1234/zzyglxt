@@ -181,7 +181,7 @@
                     var myViewCareFamModalData ={
                         modalBodyID : "myViewCareFamModal", //公用的在后面给span加不同的内容就行了，其他模块同理
                         modalTitle : "查看详情",
-                        modalClass : "modal-lg",
+                        modalClass : "modal-xl",
                         confirmButtonStyle: "display:none",
                     };
                     var myCareFamModal = modalUtil.init(myViewCareFamModalData);
@@ -285,22 +285,21 @@
                 orange.redirect(url);
             });
 
-            var pl = dictUtil.getDictByCode(dictUtil.DICT_LIST.webStatus);
-            $("#chargePersonSearch").selectUtil(pl);
+            $("#chargePersonSearch").selectUtil(selectUtil.inSearchStatus());
 
             var aCol = [
                 {field: 'name', title: '国医话健康标题'},
                 {field: 'source', title: '来源'},
-                {field: 'author', title: '作者'},
-                {field: 'filePath', title: '附件', formatter:function (value, row, index) {
+                {field: 'author', title: '作者',width:'100px'},
+                {field: 'filePath', title: '附件', width:'200px',formatter:function (value, row, index) {
                         if(value == null){
                             return '<p style="padding-top: 15px">无附件</p>';
                         }else{
                             return '<a href="'+value+'">'+row.fileName+'</a>'
                         }
                     }},
-                {field:'itemcreateat',title:'发布时间'},
-                {field: 'action',  title: '操作',formatter: operation,events:orgEvents}
+                {field:'itemcreateat',title:'发布时间',width:'260px'},
+                {field: 'action',  title: '操作',width:'200px',formatter: operation,events:orgEvents}
             ];
 
             var myTable = bootstrapTableUtil.myBootStrapTableInit("table", url, aParam, aCol);
@@ -311,7 +310,7 @@
                 myTable = bootstrapTableUtil.myBootStrapTableInit("table", url, param, aCol);
             }
 
-            bootstrapTableUtil.globalSearch("table", url, aParam, aCol, "status")
+            bootstrapTableUtil.globalSearch2("table", url, aParam, aCol, "status")
 
         })
 })();

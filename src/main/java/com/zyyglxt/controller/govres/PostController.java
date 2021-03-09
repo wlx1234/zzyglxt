@@ -43,10 +43,40 @@ public class PostController {
     @GetMapping(value = "/getPost")
     @ResponseBody
     @LogAnnotation(appCode ="",logTitle ="查询所有发文信息",logLevel ="1",creater ="",updater = "")
-    public ResponseData getPost(@RequestParam(value = "postDataStatus") List postDataStatus){
-        List<PostDO> postDOS = postService.getPost(postDataStatus);
-        return new ResponseData(EmBusinessError.success,DoToDto(postDOS));
+    public ResponseData getPost(@RequestParam(value = "postDataStatus") String postDataStatus){
+        return new ResponseData(EmBusinessError.success,postService.getPost(postDataStatus));
     }
+
+    //查询当前分管局长
+    @GetMapping(value = "/getDeputyDirector")
+    @ResponseBody
+    @LogAnnotation(appCode ="",logTitle ="查询当前分管局长",logLevel ="1",creater ="",updater = "")
+    public ResponseData getDeputyDirector(@RequestParam(value = "postOpinion1") String postOpinion1){
+        return new ResponseData(EmBusinessError.success,postService.getDeputyDirector(postOpinion1));
+    }
+
+    @GetMapping(value = "/selectOne/{itemid}/{itemcode}")
+    @ResponseBody
+    @LogAnnotation(appCode ="",logTitle ="查询一个带文件的发文信息",logLevel ="1",creater ="",updater = "")
+    public ResponseData getOnePost(@PathVariable Integer itemid, @PathVariable String itemcode){
+
+        return new ResponseData(EmBusinessError.success,postService.selOneWithFile(itemid,itemcode));
+    }
+
+    @GetMapping(value = "/getPostFileForMain")
+    @ResponseBody
+    @LogAnnotation(appCode ="",logTitle ="查询所有发文附件信息",logLevel ="1",creater ="",updater = "")
+    public ResponseData getPostFileForMain(){
+        return new ResponseData(EmBusinessError.success,postService.getPostFileForMain());
+    }
+
+    @GetMapping(value = "/getPostForMainPage")
+    @ResponseBody
+    @LogAnnotation(appCode ="",logTitle ="查询所有发文标题信息",logLevel ="1",creater ="",updater = "")
+    public ResponseData getPostForMainPage(@RequestParam String status){
+        return new ResponseData(EmBusinessError.success,postService.getPostForMainPage(status));
+    }
+
 
     private List<PostDto> DoToDto(List<PostDO> DOList){
         List<PostDto> DtoList = new ArrayList<>();

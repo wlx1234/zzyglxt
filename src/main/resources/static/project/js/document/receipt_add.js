@@ -14,7 +14,7 @@
 
             var date= new Date();
             $("#receivingDateOfReceipt").datetimepicker({
-                format: 'yyyy-mm-dd hh:ii:00',//显示格式
+                format: 'yyyy-mm-dd',//显示格式
                 startDate: date,
                 startView:2,
                 minView:1,
@@ -25,7 +25,7 @@
                 showMeridian:true,
             });
             $("#timeLimit").datetimepicker({
-                format: 'yyyy-mm-dd hh:ii:00',//显示格式
+                format: 'yyyy-mm-dd',//显示格式
                 startDate: date ,
                 startView:2,
                 minView:1,
@@ -53,8 +53,9 @@
                         number : $("#number").val(),
                         secretLevel : $("#secretLevel").val(),
                         receivingDegreeOfUrgency : $("#receivingDegreeOfUrgency").val(),
-                        timeLimit : $("#timeLimit").val(),
                         receivingDataStatus : '0',
+                        timeLimit : $("#timeLimit").val(),
+
                     };
                 }else{
                     var needData = JSON.parse(localStorage.getItem("rowData"));
@@ -94,7 +95,7 @@
                 var operateMessage;
                 if(!isUpdate()){
                     addUpdateUrl = "insertreceipt";
-                    operateMessage = "录入收文信息成功";
+                    operateMessage = "收文信息发送成功";
                     ReceiptEntity = {
                         itemcode: stringUtil.getUUID(),
                         receivingNum : $("#receivingNum").val(),

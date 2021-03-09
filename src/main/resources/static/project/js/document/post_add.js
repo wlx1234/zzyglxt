@@ -1,26 +1,23 @@
 (function () {
-    require(['jquery','ajaxUtil','alertUtil','stringUtil','fileUtil','dictUtil','distpicker','selectUtil','checkUtil','uploadImg'],
-        function (jquery,ajaxUtil,alertUtil,stringUtil,fileUtil,dictUtil,distpicker,selectUtil,checkUtil,uploadImg) {
+    require(['jquery','ajaxUtil','alertUtil','stringUtil','fileUtil','dictUtil','distpicker','selectUtil','checkUtil','uploadImg','modalUtil'],
+        function (jquery,ajaxUtil,alertUtil,stringUtil,fileUtil,dictUtil,distpicker,selectUtil,checkUtil,uploadImg,modalUtil) {
 
             uploadImg.init();
-
-            //公开方式
-            var publicWay = dictUtil.getDictByCode(dictUtil.DICT_LIST.postPublicWay);
-            $("#postPublicWay").selectUtil(publicWay);
-            $('#postPublicWay').change(function () {
-                if($("#postPublicWay").val() == "2"){
-                    $('#reason').attr('style',"display:block");
-                    $('#postReason').attr('style',"display:block");
-                }else {
-                    $('#reason').attr('style',"display:none");
-                    $('#postReason').attr('style',"display:none");
-                    $("#postReason").val() == "";
-                }
-            });
 
             //不公开理由
             var reason = dictUtil.getDictByCode(dictUtil.DICT_LIST.postReason);
             $("#postReason").selectUtil(reason);
+
+            //公开方式
+            $('input[type=radio][name=postPublicWay]').change(function () {
+                if(this.value == "2"){
+                    $('#postReason').attr('style',"display:block");
+                }else {
+                    $('#postReason').attr('style',"display:none");
+                    $("#postReason").selectUtil(reason);
+                    $("#postReason").val() == "";
+                }
+            })
 
             //是否需要公平竞争审查
             var fair = dictUtil.getDictByCode(dictUtil.DICT_LIST.postFairDepartmentReview);
@@ -41,47 +38,211 @@
             var num = dictUtil.getDictByCode(dictUtil.DICT_LIST.postDocumentNum);
             $("#postDocumentNum").selectUtil(num);
 
-            //主送目标
-            let send = dictUtil.getDictByCode(dictUtil.DICT_LIST.areaAdmin);
-            $("#masterSend").selectUtil(send);
-
-            //console.log($("#copySendGoal").val())
-            //抄送目标
-            $("#copySendGoal").selectUtil(send);
-            $("#add").unbind().on("click",function () {
-                var str = $("#copySend").val();
-                if (str.length === 0){
-                    $("#copySend").val(send[0].text);
-                }else {
-                    $("#copySend").val($("#copySend").val()+" "+send[$("#copySendGoal").val()].text);
-                }
-                $("#copySendGoal option[value=" + $("#copySendGoal").val() + "]").remove();
-            })
-            $("#clear").unbind().on("click",function () {
-                $("#copySend").val("");
-                $("#copySendGoal").selectUtil(send);
-            })
-
             //当前时间
             var nowTime = stringUtil.formatDateTime(new Date());
-
             //当前用户名
             var username = sessionStorage.getItem("username");
+            //结合发文管理增加意见
+            var uuid = stringUtil.getUUID();
+            var adviceUrl = "/advice/createAdvice";
+            var AdviceEntity = {
+                itemcode : stringUtil.getUUID(),
+                dataCode : uuid,
+                initial : username,
+                initialDate : nowTime,
+            };
+
+            //主送抄送
+            // 存储账号信息
+            var sendGoal = {};
+            // 获取账号信息的url
+            var sendUrl = "/postref/alluser";
+
+            //获取账号信息
+            function initExpert() {
+                ajaxUtil.myAjax(null, sendUrl, null, function (data) {
+                    if (ajaxUtil.success(data)) {
+                        sendGoal = data.data
+                    } else {
+                        alert(data.msg);
+                    }
+                }, false, true, "get");
+            }
+
+            //获取所有主送人
+            function getZhuSong(sendCode) {
+                var zhusong;
+                $.ajax({cache: false, async: false, type: 'get', data: { dateCode: sendCode }, url: "/postref/getMasterSend", success: function (data) {
+                        zhusong = data;
+                    }
+                });
+                var zhusongGoal = "";
+                for (var i = 0; i < zhusong.data.length; i++) {
+                    zhusongGoal = zhusongGoal + zhusong.data[i].receiverId + "；";
+                }
+                $("#masterSend").val(zhusongGoal);
+            }
+
+            //获取所有抄送人
+            function getChaoSong(sendCode) {
+                var chaosong;
+                $.ajax({cache: false, async: false, type: 'get', data: { dateCode: sendCode }, url: "/postref/getCopySend", success: function (data) {
+                        chaosong = data;
+                    }
+                });
+                var chaosongGoal = "";
+                for (var j = 0; j < chaosong.data.length; j++) {
+                    chaosongGoal = chaosongGoal + chaosong.data[j].receiverId + "；";
+                }
+                $("#copySend").val(chaosongGoal);
+            }
+
+            function sendObject(x) {
+                var addSendModal = {
+                    modalBodyID: "addSendModal", //公用的在后面给span加不同的内容就行了，其他模块同理
+                    modalTitle: "发送对象",
+                    modalClass: "modal-lg",
+                    confirmButtonClass: "btn-danger",
+                    modalConfirmFun: function () {
+                        var sendRows = $("#sendTable").bootstrapTable('getSelections');
+                        if (sendRows.length == 0) {
+                            alertUtil.error("错误，未勾选发送对象，请勾选后重试");
+                            return true;
+                        }else {
+                            var sendList = [];
+                            var sendCode;
+                            if (!isUpdate()){
+                                sendCode = uuid;
+                            }else {
+                                var needData = JSON.parse(localStorage.getItem("rowData"));
+                                sendCode = needData.itemcode;
+                            }
+                            if (x === 0){
+                                for (var i = 0; i < sendRows.length; i++) {
+                                    var entity = {
+                                        itemcode: stringUtil.getUUID(),
+                                        dateCode: sendCode,
+                                        receiverId: sendRows[i].username,
+                                        receiverType: 0
+                                    };
+                                    sendList.push(entity)
+                                }
+                                if ($('#otherSend').val() !== ""){
+                                    var otherEntity = {
+                                        itemcode: stringUtil.getUUID(),
+                                        dateCode: sendCode,
+                                        receiverId: $('#otherSend').val(),
+                                        receiverType: 0
+                                    };
+                                    sendList.push(otherEntity)
+                                }
+                                var postEntity = {
+                                    dateCode: sendCode,
+                                    receiverType: 0
+                                };
+                            }else if (x === 1){
+                                for (var i = 0; i < sendRows.length; i++) {
+                                    var entity = {
+                                        itemcode: stringUtil.getUUID(),
+                                        dateCode: sendCode,
+                                        receiverId: sendRows[i].username,
+                                        receiverType: 1
+                                    };
+                                    sendList.push(entity)
+                                }
+                                if ($('#otherSend').val() !== ""){
+                                    var otherEntity = {
+                                        itemcode: stringUtil.getUUID(),
+                                        dateCode: sendCode,
+                                        receiverId: $('#otherSend').val(),
+                                        receiverType: 1
+                                    };
+                                    sendList.push(otherEntity)
+                                }
+                                var postEntity = {
+                                    dateCode: sendCode,
+                                    receiverType: 1
+                                };
+                            }
+                            var list = new Set(sendList);
+                            sendList = Array.from(list);
+                            ajaxUtil.myAjax(null,"/postref/delPostRef",postEntity,function (data) {
+                                if (ajaxUtil.success(data)) {
+                                    ajaxUtil.myAjax(null, "/postref/createPostRef", sendList, function (data) {
+                                        if (ajaxUtil.success(data)) {
+                                            if (x === 0){
+                                                getZhuSong(sendCode);
+                                            }else if (x === 1){
+                                                getChaoSong(sendCode);
+                                            }
+                                        }else {
+                                            alert(data.msg);
+                                        }
+                                    }, false, true, "post");
+                                }else {
+                                    alert(data.msg);
+                                }
+                            },false,"","delete");
+                        }
+                        return true;
+                    }
+                };
+                var addSendModal = modalUtil.init(addSendModal);
+                if (Object.keys(sendGoal).length == 0) {
+                    initExpert();
+                }
+                var sendCol = [
+                    {checkbox: true},
+                    {field: 'username', title: '账号'},
+                    {field: 'cityid', title: '主管市区'},
+                ];
+                $('#sendTable').bootstrapTable('destroy');
+                $('#sendTable').bootstrapTable({
+                    toolbar: "#sendTable",
+                    columns: sendCol,
+                    striped: true,
+                    clickToSelect: true,
+                });
+                $('#sendTable').bootstrapTable('load', Array.from(sendGoal));
+                addSendModal.show();
+            }
+
+            $("#masterSend").unbind().on('click', function () {
+                sendObject(0);
+            });
+            $("#copySend").unbind().on('click', function () {
+                sendObject(1);
+            });
+
 
             $("#cancelbtn").unbind().on('click',function () {
-                var url = "/document/post";
-                orange.redirect(url);
+                var masterSendEntity = {
+                    dateCode: uuid,
+                    receiverType: 0
+                };
+                var copySendEntity = {
+                    dateCode: uuid,
+                    receiverType: 1
+                };
+                ajaxUtil.myAjax(null,"/postref/delPostRef",masterSendEntity,function (data) {
+                    if (ajaxUtil.success(data)) {
+                        ajaxUtil.myAjax(null,"/postref/delPostRef",copySendEntity,function (data) {
+                            if (ajaxUtil.success(data)) {
+                                var url = "/document/post";
+                                orange.redirect(url);
+                            }else {
+                                alert(data.msg);
+                            }
+                        },false,"","delete");
+                    }else {
+                        alert(data.msg);
+                    }
+                },false,"","delete");
             });
 
             //查询最大的文号
             var maxNum;
-            $.ajax
-            ({  cache: false,
-                async: false,
-                type: 'get',
-                data: { aaa: "1" },
-                url: "/post/maxNum",
-                success: function (data) {
+            $.ajax({cache: false, async: false, type: 'get', data: { aaa: "1" }, url: "/post/maxNum", success: function (data) {
                     maxNum = data;
                 }
             });
@@ -102,21 +263,23 @@
             }
             $("#postDocumentNum1").val(pad(newNum));
 
-            //结合发文管理增加意见
-            var uuid = stringUtil.getUUID();
-            var adviceUrl = "/advice/createAdvice";
-            var AdviceEntity = {
-                itemcode : stringUtil.getUUID(),
-                dataCode : uuid,
-                initial : username,
-                initialDate : nowTime,
-            };
-
 
             $("#savebtn").unbind().on('click',function () {
                 var PostEntity;
                 var requestUrl;
                 var operateMessage;
+                var publicWay;
+                var reason;
+                if($("input[name='postPublicWay']:checked").val()=="0"){
+                    publicWay="0";
+                    reason = "";
+                }else if($("input[name='postPublicWay']:checked").val()=="1"){
+                    publicWay="1";
+                    reason = "";
+                }else if($("input[name='postPublicWay']:checked").val()=="2"){
+                    publicWay="2";
+                    reason = $("#postReason").val();
+                }
                 var normative;
                 if($("input[name='postNormativeDocuments']:checked").val()=="y"){
                     normative="y";
@@ -135,8 +298,8 @@
                     PostEntity = {
                         itemcode: uuid,
                         postDocumentTitle : $("#postDocumentTitle").val(),
-                        postPublicWay : $("#postPublicWay").val(),
-                        postReason : $("#postReason").val(),
+                        postPublicWay : publicWay,
+                        postReason : reason,
                         postFairDepartmentReview : $("#postFairDepartmentReview").val(),
                         postNormativeDocuments : normative,
                         postSecretRelated : secret,
@@ -160,13 +323,14 @@
                         itemid: needData.itemid,
                         itemcode: needData.itemcode,
                         postDocumentTitle : $("#postDocumentTitle").val(),
-                        postPublicWay : $("#postPublicWay").val(),
+                        postPublicWay : publicWay,
                         postReason : $("#postReason").val(),
                         postFairDepartmentReview : $("#postFairDepartmentReview").val(),
                         postNormativeDocuments : normative,
                         postSecretRelated : secret,
                         postPrinting : $("#postPrinting").val(),
                         postDocumentNum : $("#postDocumentNum").val(),
+                        postDataStatus : "0",
                     };
                     operateMessage = "修改发文信息成功";
                     if (needData.fileName !== null){
@@ -188,9 +352,20 @@
                     if(ajaxUtil.success(data)){
                         ajaxUtil.myAjax(null,adviceUrl,AdviceEntity,function (data) {
                             if (ajaxUtil.success(data)){
-                                alertUtil.info(operateMessage);
-                                var url = "/document/post";
-                                orange.redirect(url);
+                                var submitConfirmModal = {
+                                    modalBodyID :"myTopicSubmitTip",
+                                    modalTitle : "提示",
+                                    modalClass : "modal-lg",
+                                    cancelButtonStyle: "display:none",
+                                    modalConfirmFun:function (){
+                                        var url = "/document/post";
+                                        orange.redirect(url);
+                                        return true;
+                                    }
+                                }
+                                var submitConfirm = modalUtil.init(submitConfirmModal);
+                                submitConfirm.show();
+
                             }else {
                                 alertUtil.alert(data.msg);
                             }
@@ -204,85 +379,144 @@
 
 
             $("#submitbtn").unbind().on('click',function () {
-                var PostEntity;
-                var requestUrl;
-                var operateMessage;
-                var normative;
-                if($("input[name='postNormativeDocuments']:checked").val()=="y"){
-                    normative="y";
-                }else{
-                    normative="n";
-                }
-                var secret;
-                if($("input[name='postSecretRelated']:checked").val()=="y"){
-                    secret="y";
-                }else{
-                    secret="n";
-                }
-                if (!isUpdate()){
-                    requestUrl = "/post/createPost";
-                    operateMessage = "提交发文信息成功";
-                    PostEntity = {
-                        itemcode: uuid,
-                        postDocumentTitle : $("#postDocumentTitle").val(),
-                        postPublicWay : $("#postPublicWay").val(),
-                        postReason : $("#postReason").val(),
-                        postFairDepartmentReview : $("#postFairDepartmentReview").val(),
-                        postNormativeDocuments : normative,
-                        postSecretRelated : secret,
-                        postPrinting : $("#postPrinting").val(),
-                        postDocumentNum : $("#postDocumentNum").val(),
-                        postDocumentNum1 : pad(newNum),
-                        postDataStatus : "1",
-                    };
-                }
-                else {
-                    var needData = JSON.parse(localStorage.getItem("rowData"));
-                    requestUrl = "/post/updatePost";
-                    PostEntity = {
-                        itemid: needData.itemid,
-                        itemcode: needData.itemcode,
-                        postDocumentTitle : $("#postDocumentTitle").val(),
-                        postPublicWay : $("#postPublicWay").val(),
-                        postReason : $("#postReason").val(),
-                        postFairDepartmentReview : $("#postFairDepartmentReview").val(),
-                        postNormativeDocuments : normative,
-                        postSecretRelated : secret,
-                        postPrinting : $("#postPrinting").val(),
-                        postDocumentNum : $("#postDocumentNum").val(),
-                    }
-                    operateMessage = "修改发文信息成功";
-                }
+                var mySubmitToCZ = {
+                    modalBodyID: "mySubmitModal",
+                    modalTitle: "提交",
+                    modalClass: "modal-lg",
+                    modalConfirmFun: function () {
+                        var PostEntity;
+                        var requestUrl;
+                        var operateMessage;
+                        var publicWay;
+                        var reason;
+                        if($("input[name='postPublicWay']:checked").val()=="0"){
+                            publicWay="0";
+                            reason = "";
+                        }else if($("input[name='postPublicWay']:checked").val()=="1"){
+                            publicWay="1";
+                            reason = "";
+                        }else if($("input[name='postPublicWay']:checked").val()=="2"){
+                            publicWay="2";
+                            reason = $("#postReason").val();
+                        }
+                        var normative;
+                        if($("input[name='postNormativeDocuments']:checked").val()=="y"){
+                            normative="y";
+                        }else{
+                            normative="n";
+                        }
+                        var secret;
+                        if($("input[name='postSecretRelated']:checked").val()=="y"){
+                            secret="y";
+                        }else{
+                            secret="n";
+                        }
+                        if (!isUpdate()){
+                            requestUrl = "/post/createPost";
+                            operateMessage = "提交发文信息成功";
+                            PostEntity = {
+                                itemcode: uuid,
+                                postDocumentTitle : $("#postDocumentTitle").val(),
+                                postPublicWay : publicWay,
+                                postReason : reason,
+                                postFairDepartmentReview : $("#postFairDepartmentReview").val(),
+                                postNormativeDocuments : normative,
+                                postSecretRelated : secret,
+                                postPrinting : $("#postPrinting").val(),
+                                postDocumentNum : $("#postDocumentNum").val(),
+                                postDocumentNum1 : pad(newNum),
+                                postDataStatus : "1",
+                            };
+                            var postFile = [];
+                            postFile[0] = $("#upload_file")[0].files[0];
+                            postFile[1] = $("#fairFile")[0].files[0];
+                            var code1 = "1" + uuid.substring(1);
+                            var code2 = "2" + uuid.substring(1);
+                            ajaxUtil.postFileAjax(uuid,postFile[0], code1, sessionStorage.getItem("username"), sessionStorage.getItem("itemcode"));
+                            ajaxUtil.postFileAjax(uuid,postFile[1], code2, sessionStorage.getItem("username"), sessionStorage.getItem("itemcode"));
 
-                fileUtil.handleFile(isUpdate(), PostEntity.itemcode, $("#upload_file")[0].files[0]);
+                        }
+                        else {
+                            var needData = JSON.parse(localStorage.getItem("rowData"));
+                            requestUrl = "/post/updatePost";
+                            PostEntity = {
+                                itemid: needData.itemid,
+                                itemcode: needData.itemcode,
+                                postDocumentTitle : $("#postDocumentTitle").val(),
+                                postPublicWay : $("#postPublicWay").val(),
+                                postReason : $("#postReason").val(),
+                                postFairDepartmentReview : $("#postFairDepartmentReview").val(),
+                                postNormativeDocuments : normative,
+                                postSecretRelated : secret,
+                                postPrinting : $("#postPrinting").val(),
+                                postDocumentNum : $("#postDocumentNum").val(),
+                                postDataStatus : "1",
+                            }
+                            operateMessage = "修改发文信息成功";
+                            if (needData.fileName !== null){
+                                ajaxUtil.myAjax(null,"/file/delete?dataCode="+needData.itemcode,null,function (data) {
+                                    if(!ajaxUtil.success(data)){
+                                        return alertUtil.warning("文件删除失败,可能是文件损坏或不存在了");
+                                    }
+                                },false,"","get");
+                                postFile = [];
+                                postFile[0] = $("#upload_file")[0].files[0];
+                                postFile[1] = $("#fairFile")[0].files[0];
+                                code1 = "1" + needData.itemcode.substring(1);
+                                code2 = "2" + needData.itemcode.substring(1);
+                                ajaxUtil.postFileAjax(needData.itemcode,postFile[0], code1, sessionStorage.getItem("username"), sessionStorage.getItem("itemcode"));
+                                ajaxUtil.postFileAjax(needData.itemcode,postFile[1], code2, sessionStorage.getItem("username"), sessionStorage.getItem("itemcode"));
+                            }
+                        }
+                        ajaxUtil.myAjax(null,requestUrl,PostEntity,function (data) {
+                            if(ajaxUtil.success(data)){
+                                ajaxUtil.myAjax(null,adviceUrl,AdviceEntity,function (data) {
+                                    if (ajaxUtil.success(data)){
+                                        var submitConfirmModal = {
+                                            modalBodyID: "myTopicSubmitTip",
+                                            modalTitle: "提示",
+                                            modalClass: "modal-lg",
+                                            cancelButtonStyle: "display:none",
+                                            modalConfirmFun: function () {
+                                                var url = "/document/post";
+                                                orange.redirect(url);
+                                                return true;
+                                            }
+                                        }
+                                        var submitConfirm = modalUtil.init(submitConfirmModal);
+                                        submitConfirm.show();
 
-                ajaxUtil.myAjax(null,requestUrl,PostEntity,function (data) {
-                    if(ajaxUtil.success(data)){
-                        ajaxUtil.myAjax(null,adviceUrl,AdviceEntity,function (data) {
-                            if (ajaxUtil.success(data)){
-                                alertUtil.info(operateMessage);
-                                var url = "/document/post";
-                                orange.redirect(url);
+                                    }else {
+                                        alertUtil.alert(data.msg);
+                                    }
+                                },false,true);
                             }else {
                                 alertUtil.alert(data.msg);
                             }
                         },false,true);
-                    }else {
-                        alertUtil.alert(data.msg);
+                        return true;
                     }
-                },false,true);
+                }
+                var x = modalUtil.init(mySubmitToCZ);
+                x.show();
                 return false;
             });
 
             (function init() {
                 if (isUpdate()){
                     var tempdata = JSON.parse(localStorage.getItem("rowData"));
-                    //console.log(tempdata);
                     if (tempdata.postFairDepartmentReview == "1"){
                         $('#fairFile1').attr('style',"display:none");
                     }
                     $("#postDocumentTitle").val(tempdata.postDocumentTitle);
-                    $("#postPublicWay").val(tempdata.postPublicWay);
+                    if (tempdata.postPublicWay == "0"){
+                        $("#pw1").prop("checked",true);
+                    }else if (tempdata.postPublicWay == "1"){
+                        $("#pw2").prop("checked",true);
+                    }else if (tempdata.postPublicWay == "2"){
+                        $("#pw3").prop("checked",true);
+                        $('#postReason').attr('style',"display:block");
+                    }
                     $("#postReason").val(tempdata.postReason);
                     $("#postFairDepartmentReview").val(tempdata.postFairDepartmentReview);
                     if (tempdata.postNormativeDocuments == "y"){
@@ -298,8 +532,15 @@
                     $("#postPrinting").val(tempdata.postPrinting);
                     $("#postDocumentNum").val(tempdata.postDocumentNum);
                     $("#postDocumentNum1").val(tempdata.postDocumentNum1);
-                    var file = tempdata.filePath;
-                    uploadImg.setImgSrc(file);
+                    if (tempdata.fileName[1] == null){
+                        $("#addFile").text(tempdata.fileName);
+                    }else {
+                        $("#addFile").text(tempdata.fileName[0]);
+                        $("#addFairFile").text(tempdata.fileName[1]);
+                    }
+
+                    getZhuSong(tempdata.itemcode);
+                    getChaoSong(tempdata.itemcode);
                 }
             }());
 

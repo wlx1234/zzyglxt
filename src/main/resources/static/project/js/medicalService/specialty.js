@@ -231,10 +231,12 @@
                     var myTravelModal = modalUtil.init(myViewTravelModalData);
                     $("#specialtyImg").attr("src",row.filePath)
                     $("#specialtyName").val(row.specialtyName);
+                    $("#specialtyLevel").val(row.specialtyLevel);
                     $("#specialtyBriefIntroduce").val(row.specialtyBriefIntroduce);
                     $("#specialtyPhone").val(row.specialtyPhone);
                     $("#specialtyAddress").val(handlePro(row.specialtyAddressPro) + row.specialtyAddressCity + row.specialtyAddressCounty + row.specialtyAddress);
                     $("#specialtyLink").val(row.specialtyLink);
+                    $("#specialtyDisease").val(row.specialtyDisease);
                     $("#specialtyIntroduce").html(row.specialtyIntroduce)
                     $("#specialtyStatus").val(webStatus[row.specialtyStatus].text);
                     $("#creater").val(row.creater);
@@ -335,7 +337,7 @@
                 orange.redirect(addUrl)
             });
 
-            $("#chargePersonSearch").selectUtil(webStatus);
+            $("#chargePersonSearch").selectUtil(selectUtil.inSearchStatus());
 
             var aCol = [
                 {field: 'specialtyName', title: '科室名称'},
@@ -348,7 +350,7 @@
                         }
                     }},
                 {field: 'specialtyAddress', title: '地址',formatter:function (value, row, index) {
-                        return handlePro(row.specialtyAddressPro) + row.specialtyAddressPro + row.specialtyAddressCity + row.specialtyAddressCity + value
+                        return handlePro(row.specialtyAddressPro) + row.specialtyAddressCity + row.specialtyAddressCity + value
                     }},
                 {field: 'specialtyPhone', title: '联系电话', width:'200px'},
                 {field: 'action',  title: '操作',formatter: operation,events:orgEvents}
@@ -362,7 +364,7 @@
                 myTable = bootstrapTableUtil.myBootStrapTableInit("table", url, param, aCol);
             }
 
-            bootstrapTableUtil.globalSearch("table",url,aParam, aCol,"specialtyStatus");
+            bootstrapTableUtil.globalSearch2("table",url,aParam, aCol,"specialtyStatus");
 
         })
 })();
